@@ -1,0 +1,7 @@
+{
+  "name": "Goodlife Fitness Gym Management System",
+  "description": "A comprehensive gym management system featuring a public portal and a secure administrative dashboard with role-based access control, subscription tracking, and payment processing.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
