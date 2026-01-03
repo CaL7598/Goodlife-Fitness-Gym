@@ -8,9 +8,10 @@ interface PaymentProcessorProps {
   setPayments: React.Dispatch<React.SetStateAction<PaymentRecord[]>>;
   members: Member[];
   role: UserRole;
+  logActivity: (action: string, details: string, category: 'access' | 'admin' | 'financial') => void;
 }
 
-const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ payments, setPayments, members, role }) => {
+const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ payments, setPayments, members, role, logActivity }) => {
   const [activeTab, setActiveTab] = useState<'history' | 'momo'>('history');
   const [showPayModal, setShowPayModal] = useState(false);
   const [newPay, setNewPay] = useState<Partial<PaymentRecord>>({
@@ -21,7 +22,9 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ payments, setPaymen
   });
 
   const handleConfirmPayment = (id: string) => {
+    const pay = payments.find(p => p.id === id);
     setPayments(prev => prev.map(p => p.id === id ? { ...p, status: PaymentStatus.CONFIRMED, confirmedBy: 'Staff' } : p));
+    logActivity('Confirm Payment', `Verified ${pay?.method} payment of ₵${pay?.amount} for ${pay?.memberName}`, 'financial');
   };
 
   const handleRecordPayment = (e: React.FormEvent) => {
@@ -42,6 +45,7 @@ const PaymentProcessor: React.FC<PaymentProcessorProps> = ({ payments, setPaymen
     } as any;
 
     setPayments(prev => [payment, ...prev]);
+    logActivity('Record Payment', `Logged ₵${payment.amount} ${payment.method} entry for ${member.fullName}`, 'financial');
     setShowPayModal(false);
   };
 

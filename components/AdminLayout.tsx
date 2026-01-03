@@ -8,7 +8,9 @@ import {
   X, 
   Dumbbell,
   ShieldCheck,
-  UserCircle
+  UserCircle,
+  Play,
+  Square
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -17,9 +19,21 @@ interface AdminLayoutProps {
   currentPage: string;
   role: UserRole;
   onLogout: () => void;
+  isOnShift?: boolean;
+  onShiftSignIn?: () => void;
+  onShiftSignOut?: () => void;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children, setCurrentPage, currentPage, role, onLogout }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ 
+  children, 
+  setCurrentPage, 
+  currentPage, 
+  role, 
+  onLogout,
+  isOnShift,
+  onShiftSignIn,
+  onShiftSignOut
+}) => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
 
   const filteredNav = NAVIGATION_ITEMS.filter(item => item.roles.includes(role));
@@ -87,6 +101,27 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, setCurrentPage, cur
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Shift In/Out Button */}
+            <div className="hidden sm:flex items-center mr-4 border-r pr-6 border-slate-100">
+              {isOnShift ? (
+                <button 
+                  onClick={onShiftSignOut}
+                  className="flex items-center gap-2 px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-xs font-bold hover:bg-rose-600 hover:text-white transition-all shadow-sm"
+                >
+                  <Square size={14} fill="currentColor" />
+                  SIGN OUT FROM SHIFT
+                </button>
+              ) : (
+                <button 
+                  onClick={onShiftSignIn}
+                  className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-lg text-xs font-bold hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
+                >
+                  <Play size={14} fill="currentColor" />
+                  SIGN IN FOR SHIFT
+                </button>
+              )}
+            </div>
+
             <div className="flex flex-col items-end hidden sm:flex">
               <span className="text-sm font-bold text-slate-900">
                 {role === UserRole.SUPER_ADMIN ? 'Super Admin' : 'Staff Member'}

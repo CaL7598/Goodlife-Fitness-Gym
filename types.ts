@@ -35,6 +35,16 @@ export interface Member {
   status: 'active' | 'expiring' | 'expired';
 }
 
+export interface StaffMember {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  position: string;
+  phone: string;
+  avatar?: string;
+}
+
 export interface PaymentRecord {
   id: string;
   memberId: string;
@@ -63,10 +73,32 @@ export interface GalleryImage {
   caption: string;
 }
 
+export interface ActivityLog {
+  id: string;
+  userRole: UserRole;
+  userEmail: string;
+  action: string;
+  details: string;
+  timestamp: string;
+  category: 'access' | 'admin' | 'financial';
+}
+
+export interface AttendanceRecord {
+  id: string;
+  staffEmail: string;
+  staffRole: UserRole;
+  date: string;
+  signInTime: string;
+  signOutTime?: string;
+}
+
 export interface AppState {
   userRole: UserRole;
   members: Member[];
+  staff: StaffMember[];
   payments: PaymentRecord[];
   announcements: Announcement[];
   gallery: GalleryImage[];
+  activityLogs: ActivityLog[];
+  attendanceRecords: AttendanceRecord[];
 }

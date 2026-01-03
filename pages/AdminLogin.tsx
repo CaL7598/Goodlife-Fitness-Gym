@@ -4,10 +4,11 @@ import { UserRole } from '../types';
 import { Lock, Shield, User, Dumbbell, AlertTriangle } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: (role: UserRole) => void;
+  onLogin: (role: UserRole, email: string) => void;
+  logActivity: (action: string, details: string, category: 'access' | 'admin' | 'financial') => void;
 }
 
-const AdminLogin: React.FC<LoginProps> = ({ onLogin }) => {
+const AdminLogin: React.FC<LoginProps> = ({ onLogin, logActivity }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,9 +16,13 @@ const AdminLogin: React.FC<LoginProps> = ({ onLogin }) => {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === 'admin@goodlife.com' && password === 'admin123') {
-      onLogin(UserRole.SUPER_ADMIN);
+      onLogin(UserRole.SUPER_ADMIN, email);
+      // We log activity manually here because state in App.tsx hasn't updated yet to get userEmail/Role from props for the useCallback
+      // So we use a special variant or just ensure logActivity handles current params
+      logActivity('Portal Login', `Super Admin (${email}) logged in successfully`, 'access');
     } else if (email === 'staff@goodlife.com' && password === 'staff123') {
-      onLogin(UserRole.STAFF);
+      onLogin(UserRole.STAFF, email);
+      logActivity('Portal Login', `Staff Member (${email}) logged in successfully`, 'access');
     } else {
       setError('Invalid credentials. Use admin@goodlife.com (admin123) or staff@goodlife.com (staff123).');
     }

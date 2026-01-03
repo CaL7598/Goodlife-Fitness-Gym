@@ -1,13 +1,17 @@
 
 import React, { useMemo, useState } from 'react';
-import { Member, PaymentRecord, UserRole } from '../types';
+import { Member, PaymentRecord, UserRole, StaffMember, AttendanceRecord, ActivityLog } from '../types';
 import { 
   Users, 
   CreditCard, 
   AlertCircle, 
   TrendingUp, 
   CheckCircle2,
-  Brain
+  Brain,
+  Activity,
+  MapPin,
+  Clock,
+  User as UserIcon
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -16,9 +20,7 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  AreaChart,
-  Area
+  ResponsiveContainer
 } from 'recharts';
 import { generateSummary } from '../geminiService';
 
@@ -26,9 +28,12 @@ interface DashboardProps {
   members: Member[];
   payments: PaymentRecord[];
   role: UserRole;
+  staff: StaffMember[];
+  attendanceRecords: AttendanceRecord[];
+  activityLogs: ActivityLog[];
 }
 
-const AdminDashboard: React.FC<DashboardProps> = ({ members, payments, role }) => {
+const AdminDashboard: React.FC<DashboardProps> = ({ members, payments, role, staff, attendanceRecords, activityLogs }) => {
   const [aiSummary, setAiSummary] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -60,6 +65,21 @@ const AdminDashboard: React.FC<DashboardProps> = ({ members, payments, role }) =
     const summary = await generateSummary(stats);
     setAiSummary(summary);
     setIsGenerating(false);
+  };
+
+  // Helper to determine staff status
+  const getStaffStatus = (email: string) => {
+    const today = new Date().toISOString().split('T')[0];
+    const isCurrentlyOnShift = attendanceRecords.some(r => r.staffEmail === email && r.date === today && !r.signOutTime);
+    
+    // Find last activity
+    const lastActivity = activityLogs.find(log => log.userEmail === email);
+    
+    return {
+      isActive: isCurrentlyOnShift,
+      lastAction: lastActivity?.action || 'No recent activity',
+      lastSeen: lastActivity ? new Date(lastActivity.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'
+    };
   };
 
   return (
@@ -113,29 +133,78 @@ const AdminDashboard: React.FC<DashboardProps> = ({ members, payments, role }) =
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Chart */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-          <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-            <TrendingUp size={18} className="text-slate-400" />
-            Member Distribution
-          </h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  cursor={{ fill: '#f1f5f9' }}
-                />
-                <Bar dataKey="value" fill="#e11d48" radius={[4, 4, 0, 0]} barSize={60} />
-              </BarChart>
-            </ResponsiveContainer>
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+            <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
+              <TrendingUp size={18} className="text-slate-400" />
+              Member Distribution
+            </h3>
+            <div className="h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                  <YAxis axisLine={false} tickLine={false} />
+                  <Tooltip 
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    cursor={{ fill: '#f1f5f9' }}
+                  />
+                  <Bar dataKey="value" fill="#e11d48" radius={[4, 4, 0, 0]} barSize={60} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
+
+          {/* New Super Admin Feature: Team Presence Monitoring */}
+          {role === UserRole.SUPER_ADMIN && (
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-bold text-slate-800 flex items-center gap-2">
+                  <Activity size={18} className="text-rose-500" />
+                  Team Presence & Monitoring
+                </h3>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded">
+                  Live Status
+                </span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {staff.map((employee) => {
+                  const status = getStaffStatus(employee.email);
+                  return (
+                    <div key={employee.id} className="p-4 rounded-xl border border-slate-100 bg-slate-50/30 flex items-center justify-between group hover:border-rose-200 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs ${status.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-500'}`}>
+                            {employee.fullName.split(' ').map(n => n[0]).join('')}
+                          </div>
+                          {status.isActive && (
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full animate-pulse"></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900">{employee.fullName}</p>
+                          <p className="text-[10px] text-slate-500">{employee.position}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-block ${status.isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                          {status.isActive ? 'On Shift' : 'Inactive'}
+                        </div>
+                        <p className="text-[9px] text-slate-400 mt-1 flex items-center justify-end gap-1">
+                          <Clock size={10} />
+                          {status.isActive ? 'Active since ' + status.lastSeen : 'Last seen ' + status.lastSeen}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* AI Insight Sidebar */}
-        <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg relative overflow-hidden">
+        <div className="bg-slate-900 text-white p-6 rounded-xl shadow-lg relative overflow-hidden h-fit">
           <div className="relative z-10 h-full flex flex-col">
             <div className="flex items-center gap-2 mb-4 text-rose-400">
               <Brain size={24} />

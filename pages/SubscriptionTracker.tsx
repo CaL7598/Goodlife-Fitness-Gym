@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 import { Member, UserRole } from '../types';
 import { Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 
-const SubscriptionTracker: React.FC<{ members: Member[]; setMembers: any; role: UserRole }> = ({ members, setMembers, role }) => {
+const SubscriptionTracker: React.FC<{ members: Member[]; setMembers: any; role: UserRole; logActivity: (action: string, details: string, category: 'access' | 'admin' | 'financial') => void }> = ({ members, setMembers, role, logActivity }) => {
   
   const sortedMembers = useMemo(() => {
     return [...members].sort((a, b) => {
@@ -13,6 +13,7 @@ const SubscriptionTracker: React.FC<{ members: Member[]; setMembers: any; role: 
   }, [members]);
 
   const handleRenew = (id: string) => {
+    const member = members.find(m => m.id === id);
     const now = new Date();
     const expiry = new Date();
     expiry.setMonth(now.getMonth() + 1);
@@ -24,6 +25,7 @@ const SubscriptionTracker: React.FC<{ members: Member[]; setMembers: any; role: 
       expiryDate: expiry.toISOString().split('T')[0]
     } : m));
 
+    logActivity('Manual Renewal', `Extended subscription for ${member?.fullName} until ${expiry.toISOString().split('T')[0]}`, 'admin');
     alert("Subscription renewed! Automatic confirmation message simulated.");
   };
 

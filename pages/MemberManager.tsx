@@ -7,9 +7,10 @@ interface MemberManagerProps {
   members: Member[];
   setMembers: React.Dispatch<React.SetStateAction<Member[]>>;
   role: UserRole;
+  logActivity: (action: string, details: string, category: 'access' | 'admin' | 'financial') => void;
 }
 
-const MemberManager: React.FC<MemberManagerProps> = ({ members, setMembers, role }) => {
+const MemberManager: React.FC<MemberManagerProps> = ({ members, setMembers, role, logActivity }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [newMember, setNewMember] = useState<Partial<Member>>({
@@ -42,9 +43,9 @@ const MemberManager: React.FC<MemberManagerProps> = ({ members, setMembers, role
     };
 
     setMembers(prev => [...prev, member]);
+    logActivity('Register Member', `Created profile for ${member.fullName} (${member.plan})`, 'admin');
     setShowAddModal(false);
     setNewMember({ fullName: '', email: '', phone: '', plan: SubscriptionPlan.BASIC });
-    alert(`Welcome message simulated for ${member.fullName}`);
   };
 
   const handleDelete = (id: string) => {
@@ -52,8 +53,10 @@ const MemberManager: React.FC<MemberManagerProps> = ({ members, setMembers, role
       alert("Only Super Admins can delete members.");
       return;
     }
-    if (confirm("Are you sure you want to delete this member?")) {
+    const memberToDelete = members.find(m => m.id === id);
+    if (confirm(`Are you sure you want to delete ${memberToDelete?.fullName}?`)) {
       setMembers(prev => prev.filter(m => m.id !== id));
+      logActivity('Delete Member', `Removed member ${memberToDelete?.fullName} from directory`, 'admin');
     }
   };
 
